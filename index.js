@@ -144,25 +144,42 @@ app.post('/signup', async (req, res) => {
 
 // Creating endpoint for user login
 app.post('/login', async (req, res) => {
-    let user = await User.findOne({ email: req.body.email });
+    try {
+        let user = await User.findOne({ email: req.body.email });
 
-    if (user) {
-        try {
-            const passCompare = await bcrypt.compare(req.body.password, user.password);
-            if (passCompare) {
-                const token = jwt.sign({ user: { id: user.id } }, 'secret_ecom');
-                res.json({ success: true, token });
-            } else {
-                res.status(400).json({ success: false, errors: "Wrong password" });
-            }
-        } catch (error) {
-            console.error("bcrypt error:", error);
-            res.status(500).json({ success: false, errors: "Internal Server Error" });
+        if (!user) {
+            return res.status(400).json({ success: false, errors: "Wrong Email Id" });
         }
-    } else {
-        res.status(400).json({ success: false, errors: "Wrong Email Id" });
+
+        // Debugging logs
+        console.log("Entered Password:", req.body.password);
+        console.log("Stored Hashed Password:", user.password);
+
+        // Ensure both password fields are valid strings before comparing
+        if (!req.body.password || typeof req.body.password !== 'string') {
+            return res.status(400).json({ success: false, errors: "Invalid password input" });
+        }
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.status(500).json({ success: false, errors: "Password not found in database" });
+        }
+
+        // Compare passwords
+        const passCompare = await bcrypt.compare(req.body.password, user.password);
+
+        if (passCompare) {
+            const token = jwt.sign({ user: { id: user.id } }, 'secret_ecom');
+            return res.json({ success: true, token });
+        } else {
+            return res.status(400).json({ success: false, errors: "Wrong password" });
+        }
+
+    } catch (error) {
+        console.error("bcrypt error:", error);
+        res.status(500).json({ success: false, errors: "Internal Server Error" });
     }
 });
+
 
 // Start the server
 app.listen(port, (error) => {
