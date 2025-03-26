@@ -1,16 +1,17 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 // Product schema
 const productSchema = mongoose.Schema({
+    category:{
+        type: mongoose.Types.ObjectId,
+        ref: "Category",
+        required: true,
+    },
     name: {
         type: String,
         required: true
     },
     image: {
-        type: String,
-        required: true,
-    },
-    category:{
         type: String,
         required: true,
     },

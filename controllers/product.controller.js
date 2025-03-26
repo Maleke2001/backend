@@ -1,57 +1,75 @@
-import Product from "../models/Product.js";
+import { asyncWrapper } from '../middleware/asyncHandler.js';
+import Product from '../models/Product.js';
+import { HTTP_STATUS } from '../constants/apiConstants.js';
 
-export const createProduct = async (req, res) => {
-    console.log("Request Body:", req.body); // Log request body
+export const createProduct = asyncWrapper(async (req, res) => {
+    const { name, image, category, new_price, old_price } = req.body;
 
-    try {
-        const { name, image, category, new_price, old_price } = req.body;
-
-        if (!name || !image || !category || !new_price || !old_price) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide all required fields and an image"
-            });
-        }
-
-        const product = new Product({
-            name,
-            image,
-            category,
-            new_price,
-            old_price
-        });
-
-        await product.save();
-        console.log("Product saved successfully!");
-        res.json({ success: true, name });
-    } catch (error) {
-        console.error("Error creating product:", error);
-        res.status(500).json({ success: false, message: "Error creating product" });
+    if (!name || !image || !category || !new_price || !old_price) {
+        res.status(HTTP_STATUS.BAD_REQUEST);
+        throw new Error('Please provide all required fields');
     }
-};
 
- export const deleteProduct = async (req, res) => {
-    try {
-        const product = await Product.findOneAndDelete({ _id: req.body.id });
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found" });
-        }
-        console.log("deleted");
-        res.json({ success: true, name: req.body.name });
-    } catch (error) {
-        console.error("Error deleting product:", error);
-        res.status(500).json({ success: false, message: "Error deleting product" });
-    }
-}
+    const product = await Product.create(req.body);
+    res.status(HTTP_STATUS.CREATED).json({
+        success: true,
+        message: 'Product created successfully',
+        product
+    });
+});
 
-export const getProduct =async (req, res) => {
-    try {
-        const products = await Product.find({});
-        console.log("All products fetched successfully");
-        res.status(200).json(products);
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        res.status(500).json({ message: "Server error while fetching products" });
+export const getProduct = asyncWrapper(async (req, res) => {
+    const products = await Product.find({}).populate('category');
+    res.status(HTTP_STATUS.OK).json({
+        success: true,
+        count: products.length,
+        products
+    });
+});
+
+export const deleteProduct = asyncWrapper(async (req, res) => {
+    const product = await Product.findOneAndDelete({ _id: req.body.id });
+    if (!product) {
+        res.status(HTTP_STATUS.NOT_FOUND);
+        throw new Error('Product not found');
     }
-}
+    res.status(HTTP_STATUS.OK).json({ 
+        success: true, 
+        message: 'Product deleted successfully',
+        productId: req.body.id
+    });
+});
+
+export const updateProduct = asyncWrapper(async (req, res) => {
+    const product = await Product.findByIdAndUpdate(
+        req.params.id, 
+        req.body, 
+        { new: true, runValidators: true }
+    );
+    
+    if (!product) {
+        res.status(HTTP_STATUS.NOT_FOUND);
+        throw new Error('Product not found');
+    }
+
+    res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'Product updated successfully',
+        product
+    });
+});
+
+export const getProductById = asyncWrapper(async (req, res) => {
+    const product = await Product.findById(req.params.id).populate('category');
+    
+    if (!product) {
+        res.status(HTTP_STATUS.NOT_FOUND);
+        throw new Error('Product not found');
+    }
+
+    res.status(HTTP_STATUS.OK).json({
+        success: true,
+        product
+    });
+});
 

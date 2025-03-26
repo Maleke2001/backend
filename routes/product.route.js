@@ -1,7 +1,8 @@
 import express from "express";
 import { createProduct, deleteProduct, getProduct } from "../controllers/product.controller.js";
-import { upload } from "../middleware/uploadMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
 
+// Change your import from { upload } to just upload
 
 
 const router = express.Router();

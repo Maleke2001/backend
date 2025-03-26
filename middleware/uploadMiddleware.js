@@ -1,21 +1,30 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+import multer from 'multer';
+import path from 'path';
 
-// Ensure the upload directory exists
-const uploadDir = "./upload/images";
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "./upload/images");
+        cb(null, 'upload/images');
     },
     filename: (req, file, cb) => {
-        cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
-export const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Not an image! Please upload only images.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
+
+export default upload;
