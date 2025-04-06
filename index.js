@@ -8,11 +8,12 @@ import uploadRoutes from "./routes/upload.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import fs from "fs";
 import { errorHandler } from './middleware/errorMiddleware.js';
+import cartRoutes from './routes/cart.routes.js'; // ✅ only this one is needed
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5001; // Changed to 5001
+const port = process.env.PORT || 5000;
 
 // Ensure that the upload directory exists
 const uploadDir = "./upload/images";
@@ -23,9 +24,6 @@ if (!fs.existsSync(uploadDir)) {
 app.use(express.json()); 
 app.use(cors());
 
-
-
-
 // Serve uploaded images statically
 app.use("/images", express.static("upload/images"));
 app.use("/api/upload", uploadRoutes);
@@ -34,15 +32,14 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/upload", uploadRoutes);    // duplicate
-app.use("/api/category", categoryRoutes)
+app.use("/api/upload", uploadRoutes);    
+app.use("/api/category", categoryRoutes);
+app.use("/api/cart", cartRoutes); // ✅ only use once
 
-
-// Start the server
 // Error handling should be after routes
 app.use(errorHandler);
 
-// Add error handling for the server
+// Start the server
 const server = app.listen(port, () => {
   connectDB();
   console.log(`Server running on port ${port}`);

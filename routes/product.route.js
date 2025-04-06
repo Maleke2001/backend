@@ -1,20 +1,24 @@
-import express from "express";
-import { createProduct, deleteProduct, getProduct } from "../controllers/product.controller.js";
-import upload from "../middleware/uploadMiddleware.js";
-
-// Change your import from { upload } to just upload
-
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { isAdmin } from '../middleware/adminMiddleware.js';
+import { 
+    createProduct, 
+    updateProduct, 
+    deleteProduct, 
+    getProducts, 
+    getProductById 
+} from '../controllers/product.controller.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Creating product (with image upload)
-router.post("/addproduct", upload.single("image"), createProduct);
+// Public routes
+router.get('/', getProducts);
+router.get('/:id', getProductById);
 
-// API for deleting a product
-router.delete("/removeproduct", deleteProduct);
-
-// API for getting all products
-router.get("/allproducts", getProduct);
-
+// Admin routes
+router.post('/', protect, isAdmin, upload.single('image'), createProduct);
+router.put('/:id', protect, isAdmin, upload.single('image'), updateProduct);
+router.delete('/:id', protect, isAdmin, deleteProduct);
 
 export default router;
